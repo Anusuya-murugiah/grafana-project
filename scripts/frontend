@@ -1,0 +1,27 @@
+pipeline {
+  agent any 
+  tools {
+    jdk 'jdk'
+    nodejs 'nodejs'
+  }
+  stages {
+    stage('cleaning workspace') {
+      steps {
+         cleanWs()
+      }
+    }
+    stage('checkout from git') {
+      steps {
+         git branch: 'main', credentialsId: 'GITHUB', url: ''
+      }
+    }
+    stage('sonarqube Analysis') {
+      steps {
+        dir('app-code/frontend/notes-frontend') {
+          withsonarQubeEnv('sonar-server')  {
+            
+          
+      }
+    }
+      
+  
