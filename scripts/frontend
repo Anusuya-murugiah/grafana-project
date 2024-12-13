@@ -4,6 +4,9 @@ pipeline {
     jdk 'jdk'
     nodejs 'nodejs'
   }
+  environment {
+     AWS_ECR_REPO_NAME = credentials(ECR_REPO_FRONT_END)
+  }
   stages {
     stage('cleaning workspace') {
       steps {
@@ -19,9 +22,57 @@ pipeline {
       steps {
         dir('app-code/frontend/notes-frontend') {
           withsonarQubeEnv('sonar-server')  {
-            
-          
+            sh '''
+                $SCANNER_HOME/bin/sonar-scanner \
+                -Dsonar.projectKey=frontend \
+                -Dsonar.sources=. \
+                -Dsonar.host.url=http://54.212.6.197:9000 \
+                -Dsonar.login=sqp_3224bbd77e3d0d815dbc9051c106054c8ce94ec6
+          '''
+          }
+        }
       }
     }
+   stage('quality check') {
+     steps {
+       script {
+          waitForQualityGate abortpipeline: false, credentialsId: 'sonar-token'
+       }
+     }
+   }
+   stage('OWASP Dependency-Check scan') {
+     steps {
+       dir('app-code/frontend/notes-frontend') {
+         dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odc-installation: 'Dp-check'
+         dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+       }
+      }
+    }
+    stage(Trivy file scan') {
+       steps {
+         dir('app-code/frontend/frontend-notes') {
+           sh 'trivy fs . > trivy.txt'
+         }
+       }
+    }
+   stage('Docker image build') {
+     steps {
+        scripts {
+          dir('app-code/frontend/notes-frontend')  { 
+            sh '''
+                docker system prune -f
+                docker system container -f 
+                docker build -t $(AWS_ECR_REPO_NAME) .
+             }
+           }
+         }
+      }
+    stage(
+
+          
+     
+
+
+
       
   
