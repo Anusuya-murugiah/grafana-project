@@ -2,7 +2,99 @@ pipeline {
   tools {
     nodejs 'nodejs'
     jdk 'jdk'
-    
+  }
+  environment {
+   SCANNER_HOME = tool 'sonar-scanner'
+   ACCOUNT_ID = credentials('ACCOUNT_ID')
+   AWS_DEFAULT_REGION = 'us-west-2'
+   AWS_ECR_REPO_NAME = credentials('ECR_REPO_BACKEND')
+   REPOSITORY_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/"
+  }
+  stages {
+    stage('clean up') {
+       steps {
+         CleanWs()
+       }
+    }
+  
+    stage('checkout the code') {
+      steps {
+        git branch: 'main', credentialsId: 'GITHUB', url: ' '
+      }
+    }
+
+   stage('sonarqube Analysis') {
+     steps {
+       dir('app-code/backend') {
+           withSonarQubeEnv('sonar-server') {
+           sh '''
+              $SCANNER_HOME/bin/sonar-scanner  \
+              -Dsonar.projectKey=backend \
+              -Dsonar.sources=. \
+              -Dsonar.host.url=            \
+              -Dsonar.login=
+           ''' 
+           }
+        }
+      }
+   }
+   stage('Quality Gate') {
+     steps {
+       script {
+         waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
+       }
+     }
+   }
+   stage('QWASP Dependency scan') {
+     steps {
+       dir('app-code/backend') {
+           dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit ', odcInstallation: 'Dp-Check')
+           depencencyCheckPublisher pattern: '**/dependency-check-report.xml'
+        }   
+     }
+   }
+   stage('Trivy file scan') { 
+     steps {
+       dir('app-code/backend') {
+           sh 'trivy fs . < trivyfs.txt'
+       }
+     }
+   }
+   stage('Docker Image Build') {
+     steps {
+       script {
+         sh '''
+            docker system prune -f
+            docker contrainer prune -f
+            docker image build -t ${AWS_ECR_REPO_NAME} .
+        '''
+       }
+     }
+   }
+   stage('ECR Image Build') {
+     steps {
+       script {
+         sh '''
+            docker ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${REPOSITORY_URL}
+            docker tag ${AWS_ECR_REPO_NAME} ${REPOSITORY_URL}${AWS_ECR_REPO_NAME}:${BUILD_NUMBER}
+            docker push ${REPOSITORY_URL}${AWS_ECR_REPO_NAME}:${BUILD_NUMBER}
+         '''
+       }
+     }
+   }
+  stage('Trivy image scan') {
+    steps {
+       sh 'trivy image ${REPOSITORY_URL}${AWS_ECR_REPO_NAME}:{BUILD_NUMBER} < trivyimage.txt
+    }
+  }
+  stage('checkout code') {
+    steps {
+      git branch: 'main', credentialsId: 'GITHUB', url: ' '
+    }
+  }
+  
+     
+
   }
 
 }
