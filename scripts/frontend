@@ -5,9 +5,11 @@ pipeline {
     nodejs 'nodejs'
   }
   environment {
+     SCANNER_HOME = tool 'sonar-scanner'
      AWS_ECR_REPO_NAME = credentials('ECR_REPO_FRONT_END')
-     REPOSITORY_URL = "$(ACCOUNT_ID).dkr.ecr.$(AWS_DEFAULT_REGION).amazonaws.com/"
-     ACCOUNT_ID = ""
+     AWS_DEFAULT_REGION = "us-west-2'
+     REPOSITORY_URL = "${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/"
+     ACCOUNT_ID = "484907494367"
   }
   stages {
     stage('cleaning workspace') {
@@ -30,7 +32,7 @@ pipeline {
                 -Dsonar.sources=. \
                 -Dsonar.host.url=http://54.212.6.197:9000 \
                 -Dsonar.login=sqp_3224bbd77e3d0d815dbc9051c106054c8ce94ec6
-          '''
+            '''
           }
         }
       }
@@ -52,7 +54,7 @@ pipeline {
     }
     stage('Trivy file scan') {
        steps {
-         dir('app-code/frontend/frontend-notes') {
+         dir('app-code/frontend/notes-frontend') {
            sh 'trivy fs . > trivy.txt'
          }
        }
