@@ -6,7 +6,7 @@ pipeline {
   }
   environment {
      SCANNER_HOME = tool 'sonar-scanner'
-     AWS_ECR_REPO_NAME = credentials('ECR_REPO_FRONT_END')
+     AWS_ECR_REPO_NAME = credentials('ECR_REPO_FRONTEND')
      AWS_DEFAULT_REGION = "us-west-2'
      REPOSITORY_URL = "${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/"
      ACCOUNT_ID = "484907494367"
@@ -61,12 +61,12 @@ pipeline {
     }
    stage('Docker image build') {
      steps {
-        scripts {
+        script {
           dir('app-code/frontend/notes-frontend')  { 
             sh '''
                 docker system prune -f
                 docker container prune -f 
-                docker build -t $(AWS_ECR_REPO_NAME) .
+                docker build -t $AWS_ECR_REPO_NAME .
                '''
              }
            }
