@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: frontend
+  namespace: three-tier
+  labels:
+    role: frontend
+    env: demo
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingupdate:
+      maxSurge:
+      maxUnavailable: 25%
+  selector:
+    matchlabels: 
+      role: frontend
+  template:
+    metadata:
+       labels:
+         role: frontend
+    spec:
+       imagePullsecrets:
+         - name: ecr-registry-secret
+       containers:
+       - name: frontend
+         image: 484907494367.dkr.ecr.us-west-2.amazonaws.com/frontend:latest
+         imagepullpolicy: always
+         env:
+          - name: REACT_APP_BACKEND_URL
+            value: "http://api.dovz.shop/api/notes/"
+        ports:
+        - containerPort: 3000
+         
+    
+    
+   
