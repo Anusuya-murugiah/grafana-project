@@ -5,7 +5,7 @@ pipeline {
   }
   environment {
    SCANNER_HOME = tool 'sonar-scanner'
-   ACCOUNT_ID = credentials('ACCOUNT_ID')
+   AWS_ACCOUNT_ID = credentials('ACCOUNT_ID')
    AWS_DEFAULT_REGION = 'us-west-2'
    AWS_ECR_REPO_NAME = credentials('ECR_REPO_BACKEND')
    REPOSITORY_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/"
@@ -103,9 +103,9 @@ pipeline {
             sh '''
                git config user.email "anusuya211998@gmail.com"
                git config user.name "anusuya211998"
-               BUILD_NUMBER =${BUILD_NUMBER}
+               BUILD_NUMBER=${BUILD_NUMBER}
                echo ${BUILD_NUMBER}
-               imageTag =$(grep -oP '(?<=backend:)[^ ]+' deployment.yaml)
+               imageTag=$(grep -oP '(?<=backend:)[^ ]+' deployment.yaml)
                echo $imageTag
                sed -i "s/${AWS_ECR_REPO_NAME}:${imageTag}/${AWS_ECR_REPO_NAME}:${BUILD_NUMBER}/" deployment.yaml
                git add deployment.yaml
