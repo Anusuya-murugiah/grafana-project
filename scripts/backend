@@ -48,7 +48,7 @@ pipeline {
    stage('QWASP Dependency scan') {
      steps {
        dir('app-code/backend') {
-           dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit ', odcInstallation: 'Dp-Check'
+           dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'Dp-Check'
            dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
         }   
      }
