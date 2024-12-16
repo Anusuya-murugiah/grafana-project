@@ -7,7 +7,24 @@ ENV PYTHONUNBUFFERED=1
       supervisor
       rm -rf /var/lib/apt/lists/*
 
-COPY       
+COPY  .requirements home/devops-backend/requirements
+RUN mkdir -p /home/devops-backend/media
+WORKDIR /home/devops-backend
+
+RUN pip install --upgrade pip
+RUN pip install -r ./requirements/requirements.txt
+
+EXPOSE 8000
+
+RUN mkdir -p /var/logs/devops
+COPY ./scripts /home/docker/scripts
+RUN sed -i 's/\r$//' home/docker/scripts && \
+        chmod +x /home/docker/scripts
+
+COPY ./ home/devops-backend
+ENTRYPOINT /home/docker/scripts
+
+
   
 
   
